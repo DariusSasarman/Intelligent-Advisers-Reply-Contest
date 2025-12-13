@@ -1,0 +1,192 @@
+.chatContainer {
+    background: linear-gradient(
+        180deg,
+        rgb(45, 44, 44),
+        rgb(32, 31, 31)
+    );
+    width: 100%;
+    height: 100vh;
+    margin-right: 0.5rem;
+    border-radius: 10%;
+    border: 0;
+    display: flex;
+    flex-direction: column;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+/* Header */
+.chatHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background-color: rgba(55, 54, 54, 0.95);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chatbotIcon {
+    background: white;
+    aspect-ratio: 1/1;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    transition: transform 0.2s ease;
+}
+
+.chatbotIcon:hover {
+    transform: scale(1.1);
+}
+
+/* Message area */
+.chatMessages {
+    flex: 1;
+    padding: 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Common bubble style */
+.message {
+    max-width: 70%;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    word-wrap: break-word;
+}
+
+/* User message (right side) */
+.userMessage {
+    align-self: flex-end;
+    background-color: rgb(133, 134, 138);
+    color: white;
+    border-bottom-right-radius: 4px;
+    border-bottom-left-radius: 20px;
+}
+
+/* Bot message (left side) */
+.botMessage {
+    align-self: flex-start;
+    background-color: rgba(48, 46, 46, 0.842);
+    color: white;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 20px;
+}
+
+/* Wrapper at bottom */
+.chatInputWrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background-color: rgba(45, 44, 44, 0.95);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Text input */
+.chatTextInput {
+    background-color: rgb(70, 68, 68);
+    flex: 1;
+    height: 44px;
+    font-size: 0.95rem;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    padding: 0 18px;
+    color: white;
+    outline: none;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.chatTextInput::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.chatTextInput:focus {
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: rgb(78, 76, 76);
+}
+
+.chatTextInput:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Send button */
+.sendButton {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #ffffff, #dcdcdc);
+    color: #111;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sendButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.sendButton:active {
+    transform: translateY(0);
+    box-shadow: none;
+}
+
+.sendButton:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Action buttons (crown and cross) */
+.actionButton {
+    flex: 1;
+    height: 44px;
+    border-radius: 999px;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.crownButton {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    font-size: large;
+    color: #111;
+}
+
+.crownButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 215, 0, 0.4);
+}
+
+.crossButton {
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    font-size: large;
+    color: white;
+}
+
+.crossButton:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(255, 68, 68, 0.4);
+}
+
+.actionButton:active {
+    transform: translateY(0);
+    box-shadow: none;
+}

@@ -1,42 +1,367 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app {
+  width: 100%;
+  height: 100vh;
+  background: linear-gradient(180deg, rgb(45, 44, 44), rgb(32, 31, 31));
+  overflow: hidden;
+  position: relative;
+}
+
+/* Consent Modal */
+.consentOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.consentModal {
+  background: linear-gradient(180deg, rgb(55, 54, 54), rgb(45, 44, 44));
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.consentModal h2 {
+  color: white;
+  font-size: 1.8rem;
+  margin-bottom: 20px;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.consentContent {
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+  margin-bottom: 24px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+.consentContent p {
+  margin-bottom: 12px;
+}
+
+.consentContent ul {
+  margin: 12px 0 12px 24px;
+  list-style: none;
+}
+
+.consentContent li {
+  margin-bottom: 8px;
+  padding-left: 8px;
+}
+
+.warningText {
+  background: rgba(255, 200, 0, 0.15);
+  padding: 12px;
+  border-radius: 8px;
+  border-left: 3px solid #ffc800;
+  margin-top: 16px;
+}
+
+.consentButtons {
+  display: flex;
+  gap: 12px;
+}
+
+.consentButton {
+  flex: 1;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.acceptButton {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.acceptButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4);
+}
+
+.rejectButton {
+  background: linear-gradient(135deg, #f44336, #da190b);
+  color: white;
+}
+
+.rejectButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(244, 67, 54, 0.4);
+}
+
+.consentButton:active {
+  transform: translateY(0);
+}
+
+/* Welcome Screen */
+.welcomeScreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100% - 100px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  z-index: 10;
+}
+
+.welcomeTitle {
+  color: white;
+  font-size: 3rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1%;
+  margin-top: 3%;
+}
+
+/* Container for icon grid */
+.iconGrid {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: repeat(5, 20%);
+  grid-template-rows: repeat(2, 50%);
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 25px;
+}
+
+/* Icon wrapper styling */
+.iconWrapper {
+  width: 90%;
+  height: 90%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+  cursor: pointer;
+}
+
+/* Hover effects */
+.iconWrapper:hover {
+  transform: scale(1.15);
+}
+
+/* Icon images */
+.modelIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+.modelIcon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+}
+
+/* Master Input Container - Fixed at bottom, always visible */
+.masterInputContainer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 12px;
+  padding: 20px;
+  background-color: rgba(45, 44, 44, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  z-index: 1000;
+  backdrop-filter: blur(6px);
+}
+
+.masterInput {
+  flex: 1;
+  height: 50px;
+  background-color: rgb(70, 68, 68);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0 20px;
+  color: white;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.masterInput::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.masterInput:focus {
+  border-color: rgba(255, 255, 255, 0.25);
+  background-color: rgb(78, 76, 76);
+}
+
+.masterSendButton {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #ffffff, #dcdcdc);
+  color: #111;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.masterSendButton:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.masterSendButton:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.masterAddButton {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  font-size: 24px;
+  font-weight: 300;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.masterAddButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+.masterAddButton:active {
+  transform: translateY(0);
+}
+
+/* Chat Layout (After Starting) */
+.chatGrid {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(100vh - 90px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  z-index: 5;
+}
+
+.chatGrid > * {
+  flex: 1;
+  min-width: 400px;
+  max-width: 600px;
+}
+
+/* Add Modal */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.addModal {
+  background: linear-gradient(180deg, rgb(55, 54, 54), rgb(45, 44, 44));
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.addModal h2 {
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+}
+
+.modalPlaceholder {
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  padding: 40px 20px;
+  font-style: italic;
+}
+
+.closeModalButton {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: rgb(70, 68, 68);
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.closeModalButton:hover {
+  background: rgb(80, 78, 78);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .welcomeTitle {
+    font-size: 2rem;
   }
-  to {
-    transform: rotate(360deg);
+
+  .hexagonalGrid {
+    gap: 20px;
   }
-}
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  .hexagonIcon {
+    width: 70px;
+    height: 70px;
   }
-}
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+  .chatGrid > * {
+    min-width: 100%;
+  }
 }
