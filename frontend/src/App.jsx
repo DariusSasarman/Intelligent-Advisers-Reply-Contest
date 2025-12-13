@@ -178,16 +178,13 @@ function App() {
         <div className="modalOverlay" onClick={handleCloseAddModal}>
           <div className="addModal" onClick={(e) => e.stopPropagation()}>
             <h2>Add Custom Chatbot Instance</h2>
-            <p>1. Pick provider</p>
-            <p>2. Pick variant</p>
-            <p>3. Fill in data required</p>
-            <p>4. Save</p>
               <div>
                 <div className="modalContentGrid">
                   
                   {/* Left Column: Icon/Category Selector */}
                   <div className="modalLeftColumn">
                     <div className="iconSelectorGrid">
+                      <div>1.Pick provider:</div>
                       {icons.map((icon) => (
                         <div 
                           key={icon.name} 
@@ -206,7 +203,8 @@ function App() {
                   <div className="modalRightColumn">
                     <h3>⚙️ Available Models :</h3>
                     <div className="modalWIP">
-                      (WIP: This area will display model configuration fields based on the chosen category/icon.)
+                      <p>2. Enter required information.</p>
+                      (WIP: Session-based with API key insert each time. / Password based ?? Who knows...)
                     </div>
                   </div>
                 </div>
