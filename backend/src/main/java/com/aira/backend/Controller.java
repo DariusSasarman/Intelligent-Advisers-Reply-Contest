@@ -157,6 +157,17 @@ public class Controller {
             String prompt = body.get("prompt");
             String encryptedApiKey = body.get("encryptedApiKey");
             
+            // Validate inputs
+            if (encryptedApiKey == null || encryptedApiKey.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "API key not found. Please add it using the + button.", "success", false));
+            }
+            
+            if (prompt == null || prompt.trim().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Prompt is required", "success", false));
+            }
+            
             String provider = modelIdentifier.split("-")[0];
             String modelName = extractModelName(modelIdentifier);
             String apiKey = decrypt(encryptedApiKey);
@@ -178,6 +189,7 @@ public class Controller {
             return ResponseEntity.ok(Map.of("reply", aiResponse, "success", true));
             
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Map.of("error", e.getMessage(), "success", false));
         }
@@ -209,12 +221,19 @@ public class Controller {
         }
     }
     
-    // AI API calling methods remain the same
+    // AI API calling methods
     private String callAiApi(String provider, String model, String prompt, String apiKey) throws Exception {
         return switch (provider.toLowerCase()) {
             case "openai" -> callOpenAI(model, prompt, apiKey);
             case "claude" -> callClaude(model, prompt, apiKey);
             case "gemini" -> callGemini(model, prompt, apiKey);
+            case "cohere" -> callCohere(model, prompt, apiKey);
+            case "deepseek" -> callDeepSeek(model, prompt, apiKey);
+            case "grok" -> callGrok(model, prompt, apiKey);
+            case "mistral" -> callMistral(model, prompt, apiKey);
+            case "qwen" -> callQwen(model, prompt, apiKey);
+            case "llama" -> callLlama(model, prompt, apiKey);
+            case "copilot" -> callCopilot(model, prompt, apiKey);
             default -> throw new UnsupportedOperationException("Provider not supported: " + provider);
         };
     }
@@ -235,7 +254,9 @@ public class Controller {
             .build();
         
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) throw new RuntimeException("API call failed: " + response.body());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("OpenAI API error: " + response.body());
+        }
         
         JsonNode jsonResponse = objectMapper.readTree(response.body());
         return jsonResponse.at("/choices/0/message/content").asText();
@@ -258,7 +279,9 @@ public class Controller {
             .build();
         
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) throw new RuntimeException("API call failed: " + response.body());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Claude API error: " + response.body());
+        }
         
         JsonNode jsonResponse = objectMapper.readTree(response.body());
         return jsonResponse.at("/content/0/text").asText();
@@ -277,16 +300,205 @@ public class Controller {
             .build();
         
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        if (response.statusCode() != 200) throw new RuntimeException("API call failed: " + response.body());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Gemini API error: " + response.body());
+        }
         
         JsonNode jsonResponse = objectMapper.readTree(response.body());
         return jsonResponse.at("/candidates/0/content/parts/0/text").asText();
     }
     
+    private String callCohere(String model, String prompt, String apiKey) throws Exception {
+        String url = "https://api.cohere.ai/v1/chat";
+        Map<String, Object> requestBody = Map.of(
+            "model", model,
+            "message", prompt,
+            "max_tokens", 1000
+        );
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+            .build();
+        
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Cohere API error: " + response.body());
+        }
+        
+        JsonNode jsonResponse = objectMapper.readTree(response.body());
+        return jsonResponse.at("/text").asText();
+    }
+    
+    private String callDeepSeek(String model, String prompt, String apiKey) throws Exception {
+        String url = "https://api.deepseek.com/v1/chat/completions";
+        Map<String, Object> requestBody = Map.of(
+            "model", model,
+            "messages", List.of(Map.of("role", "user", "content", prompt)),
+            "max_tokens", 1000
+        );
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+            .build();
+        
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("DeepSeek API error: " + response.body());
+        }
+        
+        JsonNode jsonResponse = objectMapper.readTree(response.body());
+        return jsonResponse.at("/choices/0/message/content").asText();
+    }
+    
+    private String callGrok(String model, String prompt, String apiKey) throws Exception {
+        String url = "https://api.x.ai/v1/chat/completions";
+        Map<String, Object> requestBody = Map.of(
+            "model", model,
+            "messages", List.of(Map.of("role", "user", "content", prompt)),
+            "max_tokens", 1000
+        );
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+            .build();
+        
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Grok API error: " + response.body());
+        }
+        
+        JsonNode jsonResponse = objectMapper.readTree(response.body());
+        return jsonResponse.at("/choices/0/message/content").asText();
+    }
+    
+    private String callMistral(String model, String prompt, String apiKey) throws Exception {
+        String url = "https://api.mistral.ai/v1/chat/completions";
+        Map<String, Object> requestBody = Map.of(
+            "model", model,
+            "messages", List.of(Map.of("role", "user", "content", prompt)),
+            "max_tokens", 1000
+        );
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+            .build();
+        
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Mistral API error: " + response.body());
+        }
+        
+        JsonNode jsonResponse = objectMapper.readTree(response.body());
+        return jsonResponse.at("/choices/0/message/content").asText();
+    }
+    
+    private String callQwen(String model, String prompt, String apiKey) throws Exception {
+        String url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation";
+        Map<String, Object> requestBody = Map.of(
+            "model", model,
+            "input", Map.of("prompt", prompt),
+            "parameters", Map.of("max_tokens", 1000)
+        );
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+            .build();
+        
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Qwen API error: " + response.body());
+        }
+        
+        JsonNode jsonResponse = objectMapper.readTree(response.body());
+        return jsonResponse.at("/output/text").asText();
+    }
+    
+    private String callLlama(String model, String prompt, String apiKey) throws Exception {
+        // Using Meta's Llama API (via Replicate or similar service)
+        // This is a placeholder - adjust based on your actual Llama API endpoint
+        String url = "https://api.together.xyz/v1/chat/completions";
+        Map<String, Object> requestBody = Map.of(
+            "model", model,
+            "messages", List.of(Map.of("role", "user", "content", prompt)),
+            "max_tokens", 1000
+        );
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+            .build();
+        
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Llama API error: " + response.body());
+        }
+        
+        JsonNode jsonResponse = objectMapper.readTree(response.body());
+        return jsonResponse.at("/choices/0/message/content").asText();
+    }
+    
+    private String callCopilot(String model, String prompt, String apiKey) throws Exception {
+        // Microsoft Copilot uses Azure OpenAI endpoints
+        // This is a placeholder - you'll need to configure Azure OpenAI endpoint
+        String url = "https://api.openai.com/v1/chat/completions";
+        Map<String, Object> requestBody = Map.of(
+            "model", model,
+            "messages", List.of(Map.of("role", "user", "content", prompt)),
+            "max_tokens", 1000
+        );
+        
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(url))
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + apiKey)
+            .POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(requestBody)))
+            .build();
+        
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        if (response.statusCode() != 200) {
+            throw new RuntimeException("Copilot API error: " + response.body());
+        }
+        
+        JsonNode jsonResponse = objectMapper.readTree(response.body());
+        return jsonResponse.at("/choices/0/message/content").asText();
+    }
+    
     private String extractModelName(String modelIdentifier) {
+        // Format: provider-model-timestamp
+        // e.g., "openai-gpt-4-1234567890"
         String[] parts = modelIdentifier.split("-");
-        if (parts.length < 3) return "";
-        return String.join("-", Arrays.copyOfRange(parts, 1, parts.length - 1));
+        
+        if (parts.length < 3) {
+            return modelIdentifier;
+        }
+        
+        // Remove provider (first part) and timestamp (last part)
+        StringBuilder modelName = new StringBuilder();
+        for (int i = 1; i < parts.length - 1; i++) {
+            if (i > 1) {
+                modelName.append("-");
+            }
+            modelName.append(parts[i]);
+        }
+        
+        return modelName.toString();
     }
     
     private String getOrCreateSessionId(HttpServletRequest request, HttpServletResponse response) {
@@ -294,7 +506,7 @@ public class Controller {
         if (sessionId == null) {
             sessionId = UUID.randomUUID().toString();
             Cookie cookie = new Cookie("sessionId", sessionId);
-            cookie.setMaxAge(60 * 60 * 24 * 30);
+            cookie.setMaxAge(60 * 60 * 24 * 30); // 30 days
             cookie.setPath("/");
             cookie.setHttpOnly(true);
             response.addCookie(cookie);
@@ -306,7 +518,9 @@ public class Controller {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if ("sessionId".equals(cookie.getName())) return cookie.getValue();
+                if ("sessionId".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
             }
         }
         return null;
@@ -327,7 +541,9 @@ public class Controller {
     }
     
     private String padKey(String key) {
-        if (key.length() >= 16) return key.substring(0, 16);
+        if (key.length() >= 16) {
+            return key.substring(0, 16);
+        }
         return String.format("%-16s", key).replace(' ', '0');
     }
 }

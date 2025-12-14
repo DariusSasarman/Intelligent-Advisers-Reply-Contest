@@ -18,6 +18,28 @@ function ChatInstance({
   const [showButtons, setShowButtons] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [encryptedApiKey, setEncryptedApiKey] = useState("")
+
+  useEffect(() => {
+  const fetchApiKey = async () => {
+    if (!modelIdentifier) return
+    const provider = modelIdentifier.split('-')[0]
+    
+    try {
+      const response = await fetch('/api/keys/get', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ provider })
+      })
+      const data = await response.json()
+      if (data.apiKey) setEncryptedApiKey(data.apiKey)
+    } catch (err) {
+      console.error('Failed to fetch API key:', err)
+    }
+  }
+  fetchApiKey()
+  }, [modelIdentifier])
 
   // Update prompt when masterPrompt changes
   useEffect(() => {
