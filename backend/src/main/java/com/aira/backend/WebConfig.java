@@ -1,3 +1,4 @@
+package com.aira.backend;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
@@ -12,9 +13,10 @@ public class WebConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOriginPatterns("*")  // <-- allow any origin
-                        .allowCredentials(true)
-                        .allowedMethods("GET","POST","PUT","DELETE","OPTIONS");
+                        .allowedOriginPatterns("*") // <-- this allows any origin
+                        .allowCredentials(true)     // <-- allows cookies/auth headers
+                        .allowedMethods("GET","POST","PUT","DELETE","OPTIONS")
+                        .allowedHeaders("*");
             }
         };
     }
