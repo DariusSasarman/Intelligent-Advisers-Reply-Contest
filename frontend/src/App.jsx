@@ -14,8 +14,83 @@ const icons = Object.entries(iconModules).map(([path, module]) => {
   }
 })
 
-// Temporary models for testing - will be replaced with user-selected models
+// Function to fetch available models for a provider
+const fetchProviderModels = async (providerName) => {
+  try {
+    const response = await fetch('/api/models/provider', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        provider: providerName
+      })
+    });
 
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.models || [];
+  } catch (error) {
+    console.error('Error fetching models:', error);
+    return [];
+  }
+};
+
+// Function to save API key to server
+const saveProviderApiKey = async (provider, apiKey) => {
+  try {
+    const response = await fetch('/api/keys/save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies
+      body: JSON.stringify({
+        provider: provider,
+        apiKey: apiKey
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    console.error('Error saving API key:', error);
+    return { success: false, error: error.message };
+  }
+};
+
+// Function to fetch provider API key from server
+const fetchProviderApiKey = async (provider) => {
+  try {
+    const response = await fetch('/api/keys/get', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Include cookies
+      body: JSON.stringify({
+        provider: provider
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.apiKey || null;
+  } catch (error) {
+    console.error('Error fetching API key:', error);
+    return null;
+  }
+};
 
 function App() {
   const [hasConsented, setHasConsented] = useState(false)
@@ -25,9 +100,17 @@ function App() {
   const [showAddModal, setShowAddModal] = useState(false)
   const [isStarted, setIsStarted] = useState(false)
   const [triggerSend, setTriggerSend] = useState(0)
+  
+  // New state for modal
+  const [selectedProvider, setSelectedProvider] = useState(null)
+  const [availableModels, setAvailableModels] = useState([])
+  const [loadingModels, setLoadingModels] = useState(false)
+  const [selectedModel, setSelectedModel] = useState(null)
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [savingApiKey, setSavingApiKey] = useState(false)
+  const [saveMessage, setSaveMessage] = useState('')
 
   useEffect(() => {
-    // Check if user has consented before
     const consent = localStorage.getItem('apiKeyConsent')
     if (consent === 'true') {
       setHasConsented(true)
@@ -35,6 +118,20 @@ function App() {
       setShowConsentModal(true)
     }
   }, [])
+
+  // Load active models from localStorage on mount
+  useEffect(() => {
+    if (hasConsented) {
+      const savedModels = localStorage.getItem('activeModels')
+      if (savedModels) {
+        try {
+          setActiveModels(JSON.parse(savedModels))
+        } catch (error) {
+          console.error('Error loading saved models:', error)
+        }
+      }
+    }
+  }, [hasConsented])
 
   const handleConsent = () => {
     localStorage.setItem('apiKeyConsent', 'true')
@@ -51,11 +148,8 @@ function App() {
     const value = e.target.value
     setMasterPrompt(value)
     
-    // Start showing chat instances when user starts typing
     if (value.trim() && !isStarted) {
       setIsStarted(true)
-      // Load temporary models (will be user-selected models later)
-      setActiveModels(TEMP_MODELS)
     }
   }
 
@@ -63,9 +157,7 @@ function App() {
     if (masterPrompt.trim()) {
       if (!isStarted) {
         setIsStarted(true)
-        setActiveModels(TEMP_MODELS)
       }
-      // Trigger send in all ChatInstances by incrementing counter
       setTriggerSend(prev => prev + 1)
     }
   }
@@ -83,6 +175,83 @@ function App() {
 
   const handleCloseAddModal = () => {
     setShowAddModal(false)
+    setSelectedProvider(null)
+    setAvailableModels([])
+    setSelectedModel(null)
+    setApiKeyInput('')
+    setSaveMessage('')
+  }
+
+  // Handler for when a provider icon is clicked
+  const handleIconSelect = async (iconName) => {
+    setSelectedProvider(iconName)
+    setSelectedModel(null)
+    setApiKeyInput('')
+    setSaveMessage('')
+    setLoadingModels(true)
+    
+    const models = await fetchProviderModels(iconName)
+    setAvailableModels(models)
+    setLoadingModels(false)
+  }
+
+  // Handler for when a model is selected from the list
+  const handleModelSelect = (model) => {
+    setSelectedModel(model)
+    setApiKeyInput('')
+    setSaveMessage('')
+  }
+
+  // Handler for saving the API key and adding the model
+  const handleSaveApiKey = async () => {
+    if (!apiKeyInput.trim()) {
+      setSaveMessage('❌ Please enter an API key')
+      return
+    }
+
+    if (!selectedModel || !selectedProvider) {
+      setSaveMessage('❌ Please select a model')
+      return
+    }
+
+    setSavingApiKey(true)
+    setSaveMessage('⏳ Saving...')
+
+    // Save API key to server
+    const saveResult = await saveProviderApiKey(selectedProvider, apiKeyInput)
+    
+    if (!saveResult.success) {
+      setSaveMessage(`❌ Failed to save: ${saveResult.error}`)
+      setSavingApiKey(false)
+      return
+    }
+
+    // Create new model entry
+    const modelName = typeof selectedModel === 'string' ? selectedModel : selectedModel.name
+    const newModel = {
+      id: `${selectedProvider}-${modelName}-${Date.now()}`,
+      name: modelName,
+      provider: selectedProvider,
+      icon: icons.find(i => i.name === selectedProvider)?.path || '',
+      url: `/api/chat/${selectedProvider}` // Adjust based on your API structure
+    }
+
+    // Add to active models
+    const updatedModels = [...activeModels, newModel]
+    setActiveModels(updatedModels)
+    
+    // Save to localStorage
+    localStorage.setItem('activeModels', JSON.stringify(updatedModels))
+
+    setSaveMessage('✓ Model added successfully!')
+    setSavingApiKey(false)
+    
+    // Clear form after 1.5 seconds
+    setTimeout(() => {
+      setApiKeyInput('')
+      setSelectedModel(null)
+      setSaveMessage('')
+    }, 1500)
   }
 
   if (showConsentModal) {
@@ -124,6 +293,7 @@ function App() {
   if (!hasConsented) {
     return null
   }
+
   return (
     <div className="app">
       <div className="welcomeScreen" style={{ display: isStarted ? 'none' : 'flex' }}>
@@ -145,23 +315,23 @@ function App() {
           </div>
         ) : (
           activeModels.map((model) => (
-            <div className="Chats">
-            <ChatInstance
-              key={model.id}
-              modelName={model.name}
-              modelIcon={model.icon}
-              modelIdentifier={model.id}
-              modelUrl={model.url}
-              masterPrompt={masterPrompt}
-              encryptedApiKey={model.apiKey}
-              hideInputFooter={triggerSend > 0}
-              triggerSend={triggerSend}
-            />
+            <div className="Chats" key={model.id}>
+              <ChatInstance
+                modelName={model.name}
+                modelIcon={model.icon}
+                modelIdentifier={model.id}
+                modelUrl={model.url}
+                masterPrompt={masterPrompt}
+                provider={model.provider}
+                hideInputFooter={triggerSend > 0}
+                triggerSend={triggerSend}
+              />
             </div>
           ))
         )}
       </div>
-      <div className="masterInputContainer" style={{ display: (triggerSend > 0 && activeModels.length!=0) ? 'none' : 'flex' }}>
+
+      <div className="masterInputContainer" style={{ display: (triggerSend > 0 && activeModels.length !== 0) ? 'none' : 'flex' }}>
         <input
           className="masterInput"
           value={masterPrompt}
@@ -178,38 +348,83 @@ function App() {
         <div className="modalOverlay" onClick={handleCloseAddModal}>
           <div className="addModal" onClick={(e) => e.stopPropagation()}>
             <h2>Add Custom Chatbot Instance</h2>
-              <div>
-                <div className="modalContentGrid">
-                  
-                  {/* Left Column: Icon/Category Selector */}
-                  <div className="modalLeftColumn">
-                    <div className="iconSelectorGrid">
-                      <div>1.Pick provider:</div>
-                      {icons.map((icon) => (
-                        <div 
-                          key={icon.name} 
-                          className="iconSelectItem"
-                          // Example: You would add an onClick handler here to select the icon
-                          // onClick={() => handleIconSelect(icon.path)}
-                        >
-                          <img src={icon.path} alt={icon.name} className="modelIconLarge" />
-                          <p>{icon.name}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Right Column: Model/Key Configuration (WIP) */}
-                  <div className="modalRightColumn">
-                    <h3>⚙️ Available Models :</h3>
-                    <div className="modalWIP">
-                      <p>2. Enter required information.</p>
-                      (WIP: Session-based with API key insert each time. / Password based ?? Who knows...)
-                    </div>
+            <div>
+              <div className="modalContentGrid">
+                
+                {/* Left Column: Icon/Category Selector */}
+                <div className="modalLeftColumn">
+                  <div className="iconSelectorGrid">
+                    {icons.map((icon) => (
+                      <div 
+                        key={icon.name} 
+                        className={`iconSelectItem ${selectedProvider === icon.name ? 'selected' : ''}`}
+                        onClick={() => handleIconSelect(icon.name)}
+                      >
+                        <img src={icon.path} alt={icon.name} className="modelIconLarge" />
+                        <p>{icon.name}</p>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                {/* END: New Two-Column Layout */}
+                
+                {/* Right Column: Model List and API Key Input */}
+                <div className="modalRightColumn">
+                  <h3>⚙️ Available Models:</h3>
+                  <div className="modalWIP">
+                    {loadingModels ? (
+                      <p className="loadingText">Loading models...</p>
+                    ) : selectedProvider ? (
+                      availableModels.length > 0 ? (
+                        <ul className="modelsList">
+                          {availableModels.map((model, index) => {
+                            const modelName = typeof model === 'string' ? model : model.name
+                            const isSelected = selectedModel && 
+                              (typeof selectedModel === 'string' ? selectedModel : selectedModel.name) === modelName
+                            return (
+                              <li 
+                                key={index} 
+                                className={`modelItem ${isSelected ? 'selectedModel' : ''}`}
+                                onClick={() => handleModelSelect(model)}
+                              >
+                                {modelName}
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      ) : (
+                        <p className="emptyText">No models available for {selectedProvider}</p>
+                      )
+                    ) : (
+                      <p className="emptyText">← Select a provider to view available models</p>
+                    )}
+                  </div>
+
+                    <div className="apiKeySection">
+                      <h3>🔑 API Key:</h3>
+                      <input
+                        type="password"
+                        className="apiKeyInput"
+                        placeholder="Enter your API key..."
+                        value={apiKeyInput}
+                        onChange={(e) => setApiKeyInput(e.target.value)}
+                        disabled={savingApiKey}
+                      />
+                      <button 
+                        className="saveKeyButton"
+                        onClick={handleSaveApiKey}
+                        disabled={savingApiKey || !apiKeyInput.trim()}
+                      >
+                        {savingApiKey ? 'Saving...' : 'Save & Add Model'}
+                      </button>
+                      {saveMessage && (
+                        <p className={`saveMessage ${saveMessage.includes('✓') ? 'success' : 'error'}`}>
+                          {saveMessage}
+                        </p>
+                      )}
+                    </div>
+                </div>
               </div>
+            </div>
             <button className="closeModalButton" onClick={handleCloseAddModal}>
               Close
             </button>
