@@ -1,35 +1,27 @@
-# Build stage
+# Stage 1: Build Vite app
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Copy package files
+# Copy package.json and package-lock.json and install dependencies
 COPY package*.json ./
 RUN npm ci
 
-# Copy source and build
+# Copy all source files
 COPY . .
+
+# Build the production-ready frontend
 RUN npm run build
 
-# Production stage
+# Stage 2: Serve built app with Nginx
 FROM nginx:alpine
+
+# Copy your custom Nginx config into the container
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Copy the built frontend files from stage 1
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Configure nginx to proxy API requests
-RUN echo 'server { \
-    listen 80; \
-    location / { \
-        root /usr/share/nginx/html; \
-        try_files $uri $uri/ /index.html; \
-    } \
-    location /api { \
-        proxy_pass http://backend:8080; \
-        proxy_http_version 1.1; \
-        proxy_set_header Upgrade $http_upgrade; \
-        proxy_set_header Connection "upgrade"; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
-
 EXPOSE 80
+
+# Start Nginx in the foreground
 CMD ["nginx", "-g", "daemon off;"]
